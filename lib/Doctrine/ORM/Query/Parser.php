@@ -1671,14 +1671,12 @@ class Parser
         $this->match(Lexer::T_JOIN);
 
         $next            = $this->lexer->glimpse();
-        $joinDeclaration = ($next['type'] === Lexer::T_DOT) ? $this->JoinAssociationDeclaration() : $this->RangeVariableDeclaration();
+        $joinDeclaration = ($next['type'] === Lexer::T_DOT) ? $this->JoinAssociationDeclaration() : $this->RangeVariableDeclaration(false);
         $adhocConditions = $this->lexer->isNextToken(Lexer::T_WITH);
         $join            = new AST\Join($joinType, $joinDeclaration);
 
         // Describe non-root join declaration
         if ($joinDeclaration instanceof AST\RangeVariableDeclaration) {
-            $joinDeclaration->isRoot = false;
-
             $adhocConditions = true;
         }
 
@@ -1697,7 +1695,7 @@ class Parser
      *
      * @return \Doctrine\ORM\Query\AST\RangeVariableDeclaration
      */
-    public function RangeVariableDeclaration()
+    public function RangeVariableDeclaration($isRoot = true)
     {
         $abstractSchemaName = $this->AbstractSchemaName();
 
@@ -1716,12 +1714,13 @@ class Parser
             'relation'     => null,
             'map'          => null,
             'nestingLevel' => $this->nestingLevel,
-            'token'        => $token
+            'token'        => $token,
+            'root'         => $isRoot
         );
 
         $this->queryComponents[$aliasIdentificationVariable] = $queryComponent;
 
-        return new AST\RangeVariableDeclaration($abstractSchemaName, $aliasIdentificationVariable);
+        return new AST\RangeVariableDeclaration($abstractSchemaName, $aliasIdentificationVariable, $isRoot);
     }
 
     /**
